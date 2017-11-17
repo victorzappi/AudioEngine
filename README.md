@@ -31,8 +31,11 @@ sndfile
 fftw
 
 e.g., on Ubuntu:
+
 apt-get install libasound2-dev
+
 apt-get install libsndfile1-dev
+
 apt-get install libfftw3-dev
 
 
