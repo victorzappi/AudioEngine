@@ -11,6 +11,7 @@
 
 #include "AudioEngine.h"
 
+// must be defined in AudioEngine.h
 #ifdef SSE_SUPPORT
 //#include <cstring>  // this is needed cos memcpy is used in cvalarray.h, but already includede in AudioEngine.h
 #include <cvalarray.h>

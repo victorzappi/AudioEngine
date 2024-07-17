@@ -1,4 +1,7 @@
 /*
+ * A simple but growing Linux audio engine based on ALSA_
+ *
+ *
  * [2-Clause BSD License]
  *
  * Copyright 2017 Victor Zappi
@@ -17,27 +20,39 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * priority_utils.h
- *
- *  Created on: 2015-10-30
- *      Author: Victor Zappi
- */
+// makes a infinite and annoying sine with the audio engine
 
-#ifndef PRIORITY_UTILS_H_
-#define PRIORITY_UTILS_H_
+#include "AudioEngine.h" // back end
 
-// thread, priority and niceness
-#include <pthread.h>
-#include <sched.h>
+// engine and global settings
+AudioEngine audioEngine;
+unsigned short periodSize = 256;
+unsigned int rate = 48000;
 
 
-//-----------------------------------------------------------------------------------------------------------
-// set maximum priority to this thread
-//-----------------------------------------------------------------------------------------------------------
-void set_priority(int order, int verbose=0); // 0 is max prio, cos at front end we do not know what's the highest prio
-void set_niceness(int niceness, int verbose=0); // -20 is highest prio niceness, it's a known standard
+// oscillator and its settings
+Oscillator *sine;
+oscillator_type type = osc_sin_;
+double level = 0.3;
+double freq = 440; // meeehhh
 
+int main(int argc, char *argv[]) {
 
+	// these 3 are same as default settings, put here explicitly for clarity only
+	audioEngine.setRate(rate);
+	audioEngine.setPeriodSize(periodSize);
+	audioEngine.setBufferSize(2*periodSize);
 
-#endif /* PRIORITY_UTILS_H_ */
+	audioEngine.initEngine(); // ready to go
+
+	sine = new Oscillator(); // handy to deal with this as pointer or address
+	sine->init(type, rate, periodSize, level, freq); // when inited, oscillator is automatically triggered
+
+	// tells engine to retrieve samples from oscillator
+	audioEngine.addAudioModule(sine); // add generators or any object whose class derives from AudioOutput abstract class
+
+	audioEngine.startEngine(); // triggers an infinite audio loop, can stop with ctrl-c or similar critical stop commands
+
+	// this will never be reached q:
+	return 0;
+}

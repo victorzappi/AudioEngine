@@ -1,7 +1,4 @@
 /*
- * A simple but growing Linux audio engine based on ALSA_
- *
- *
  * [2-Clause BSD License]
  *
  * Copyright 2017 Victor Zappi
@@ -20,39 +17,58 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// make a infinite and annoying sine with the audio engine
+/*
+ * AnalogInput.h
+ *
+ *  Created on: Oct 17, 2013
+ *      Author: Victor Zappi
+ */
 
-#include "AudioEngine.h" // back end
+#ifndef ANALOGINPUT_H_
+#define ANALOGINPUT_H_
 
-// engine and global settings
-AudioEngine audioEngine;
-unsigned short periodSize = 256;
-unsigned int rate = 44100;
+#include <iostream>
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <glob.h>
+
+using namespace std;
+
+class AnalogInput
+{
+private:
+	FILE *ActivateAnalogHnd;
+	string activateAnalogPath;
+	bool analogIsSet;
+
+	FILE *AnalogInHnd;
+	string analogInPath;
+	bool helperNumFound;
+
+	// suport var for init
+	string startPath;
+	string readPath;
+
+	glob_t  globbuf;
+
+	// support vars for pin reading
+	long lSize;
+	char * buffer;
+	size_t result;
+
+	bool verbose;
+
+public:
+	AnalogInput();
+	~AnalogInput();
+
+	int initAnalogInputs();
+	int read(int index);
+
+};
 
 
-// oscillator and its settings
-Oscillator *sine;
-oscillator_type type = osc_sin_;
-double level = 0.3;
-double freq = 440; // meeehhh
 
-int main(int argc, char *argv[]) {
 
-	// these 3 are same as default settings, put here explicitly for clarity only
-	audioEngine.setPeriodSize(periodSize);
-	audioEngine.setBufferSize(2*periodSize); // this influences buffer latency the most
-	audioEngine.setRate(rate);
-
-	audioEngine.initEngine(); // ready to go
-
-	sine = new Oscillator(); // handy to deal with this as pointer or address
-	sine->init(rate, periodSize, type, level, freq); // when inited, oscillator is automatically triggered
-
-	// tells engine to retrieve samples from oscillator
-	audioEngine.addGenerator(sine); // add generators or any object whose class derives from AudioOutput abstract class
-
-	audioEngine.startEngine(); // triggers an infinite audio loop, can stop with ctrl-c or similar critical stop commands
-
-	// this will never be reached q:
-	return 0;
-}
+#endif /* ANALOGINPUT_H_ */

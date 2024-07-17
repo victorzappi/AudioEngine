@@ -104,7 +104,7 @@ int UdpServer::read(//Returns the number of bytes read, or -1 if there was an er
 		return -1;
 	FD_ZERO(&stReadFDS);
 	FD_SET(inSocket, &stReadFDS);
-	int descriptorReady= select(inSocket+1, &stReadFDS, NULL, NULL, &stZeroTimeOut); //TODO: this is not JUCE-compliant
+	int descriptorReady= select(inSocket+1, &stReadFDS, NULL, NULL, &stZeroTimeOut); // this is not JUCE-compliant
 	if(descriptorReady<0){ //an error occurred
 		return -1;
 	}

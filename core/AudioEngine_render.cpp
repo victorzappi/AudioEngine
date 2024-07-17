@@ -68,6 +68,8 @@
 #include <sstream>   // ostringstream
 using namespace std;
 
+float *outBuffer;
+
 SF_INFO sfinfo;
 SNDFILE * outfile;
 string outfiledir = ".";
@@ -112,6 +114,7 @@ int getNumOfWavFiles(string dirname) {
 void AudioEngine::initRender() {
 
 #ifdef BOUNCE
+	outBuffer = new float[period_size];
 	// change out file name according to how many wav files we have in the dir
 	// so that we don't over write
 	int fileNum = getNumOfWavFiles(outfiledir);
@@ -128,17 +131,16 @@ void AudioEngine::initRender() {
 #endif
 }
 
-//TODO handle more channels  ---> multi channel generators!!!
 /* Render function, called when new samples are needed */
-void AudioEngine::render(float sampleRate, int numChannels, int numSamples, float **sampleBuffers) {
-	memcpy(sampleBuffers[0], readGeneratorsBuffer(numSamples), sizeof(float) * numSamples);
+void AudioEngine::render(float sampleRate, int numOfSamples, int numOutChannels, double **framebufferOut, int numInChannels, double **framebufferIn) {
 
-	for(unsigned int chn = 1; chn < channels; chn++)
-		memcpy(sampleBuffers[chn], sampleBuffers[0], sizeof(float) * numSamples); //VIC forces mono by copying same samples in every buffer
+	// by default, we call this method that fills the output framebuffer with the sum of the framebuffers of all the modules loaded into the engine
+	readAudioModulesBuffers(numOfSamples, framebufferOut, framebufferIn);
 
 #ifdef BOUNCE
 	// copy audio buffer to file
-	/*sf_count_t count = */sf_write_float(outfile, sampleBuffers[0], numSamples);
+	std::copy(framebufferOut[0], framebufferOut[0]+numOfSamples, outBuffer);
+	/*sf_count_t count = */sf_write_float(outfile, outBuffer, numOfSamples);
 	/*if(count<1)
 		printf("): written samples count: %d\n", (int)count);*/
 #endif
@@ -148,6 +150,7 @@ void AudioEngine::render(float sampleRate, int numChannels, int numSamples, floa
 /* Clean up function, called once after end of render loop and before engine stops*/
 void AudioEngine::cleanUpRender() {
 #ifdef BOUNCE
+	delete[] outBuffer;
 	// to properly save audio
 	sf_write_sync(outfile);
 	sf_close(outfile);

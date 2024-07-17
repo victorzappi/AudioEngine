@@ -228,7 +228,8 @@ void Midi::readInputLoop(){
 			usleep(1000);
 		} // otherwise there might be more data ready to be read (we were at the end of the buffer), so don't sleep
 	}
-	printf("Input Loop Ended. ");
+	if(Midi::verbose)
+		printf("Midi input Loop Ended. ");
 	inputThreadRunning = false;
 }
 
@@ -251,7 +252,8 @@ void Midi::writeOutputLoop(){
 			continue;
 		}
 	}
-	printf("Output Loop Ended. ");
+	if(Midi::verbose)
+		printf("Midi output Loop Ended. ");
 	outputThreadRunning = false;
 }
 int Midi::readFrom(const char* port,/*VIC added*/ int prio){
@@ -260,7 +262,8 @@ int Midi::readFrom(const char* port,/*VIC added*/ int prio){
 	if(inputPort < 0){
 		return -1;
 	} else {
-		printf("Reading from Midi port %s\n", port);
+		if(Midi::verbose)
+			printf("Reading from Midi port %s\n", port);
 		//AV: Commented Auxiliary Task
 		//Bela_scheduleAuxiliaryTask(midiInputTask);
 		if(!inputThreadRunning) {
@@ -278,7 +281,8 @@ int Midi::writeTo(const char* port,/*VIC added*/ int prio){
 	if(outputPort < 0){
 		return -1;
 	} else {
-		printf("Writing to Midi port %s\n", port);
+		if(Midi::verbose)
+			printf("Writing to Midi port %s\n", port);
 		//AV: Commented Aux
 		//Bela_scheduleAuxiliaryTask(midiOutputTask);
 		if(!outputThreadRunning) {

@@ -29,9 +29,6 @@
 #include <stdio.h>
 #include <iostream>
 
-// thread, priority and niceness
-#include <pthread.h>
-#include <sched.h>
 #include <sys/resource.h>
 #include <unistd.h> // getpid
 
