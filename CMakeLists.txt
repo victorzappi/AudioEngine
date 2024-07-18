@@ -40,6 +40,8 @@ file(GLOB_RECURSE SRC_FILES "core/*.cpp")
 
 # Conditionally include and build the specified project
 if(BUILD_PROJECT)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
     # Assign default project if one is not specified
     if(NOT PRJ_PATH)
         set(PRJ_PATH ${DEFAULT_PRJ})
