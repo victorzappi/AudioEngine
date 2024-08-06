@@ -8,6 +8,7 @@
 #include "Waveforms.h"
 
 #include <algorithm> // reverse_copy
+#include <limits> // for last frame
 
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -19,6 +20,7 @@ Waveform::Waveform() : MultichannelOutUtils(this) {
 	direction	  = 0;
 	waveFormBuffer = NULL;
 	frameNum      = -1;
+	lastFrame	  = std::numeric_limits<unsigned long>::max();
 	isPlaying     = false;
 
 	advanceSample   = NULL;

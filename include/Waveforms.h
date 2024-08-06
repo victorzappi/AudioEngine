@@ -29,7 +29,7 @@ public:
 	//virtual double *getBuffer(int numOfSamples);
 	double **getFrameBuffer(int numOfSamples);
 	virtual double *getWaveform();
-	virtual int getWaveform(double *buff);
+	virtual int getWaveform(double *&buff);
 	virtual int getWaveformLen();
 	virtual int getCurrentFramePos();
 	~Waveform();
@@ -39,6 +39,7 @@ protected:
 	char direction; // 1 forward, -1 backwards. 0 NULL
 	long unsigned currentFrame;
 	long unsigned frameNum;
+	long unsigned lastFrame;
 	bool isPlaying;
 
 	virtual void setAdvanceSampleMethod();
@@ -85,7 +86,7 @@ inline double *Waveform::getWaveform() {
 	return waveFormBuffer;
 }
 
-inline int Waveform::getWaveform(double *buff) {
+inline int Waveform::getWaveform(double *&buff) {
 	buff = getWaveform();
 	return frameNum;
 }
@@ -114,15 +115,15 @@ inline void Waveform::advanceSampleBackAndForth() {
 	// going forward
 	if(direction == 1) {
 		if(++currentFrame >= frameNum) { // probably last sample played was frameNum-1
-			currentFrame = frameNum-2;  // so let's start from frameNum-2
-			direction     = -1;			 // and go backwards
+			currentFrame = frameNum-2;   // so let's start from frameNum-2
+			direction = -1;			     // and go backwards
 		}
 	}
 	// same for backwards
 	else if(direction == -1) {
-		if(--currentFrame < 0) {
+		if(--currentFrame == lastFrame) {
 			currentFrame = 1;
-			direction     = 1;
+			direction = 1;
 		}
 	}
 }
@@ -180,7 +181,7 @@ public:
 	double getSample();
 	double **getFrameBuffer(int numOfSamples);
 	double *getWaveform();
-	int getWaveform(double *buff);
+	int getWaveform(double *&buff);
 	int getCurrentFramePos();
 	int getWaveformLen();
 
@@ -230,7 +231,7 @@ inline double *Wavetable::getWaveform() {
 		return waveFormBuffer;
 }
 
-inline int Wavetable::getWaveform(double *buff) {
+inline int Wavetable::getWaveform(double *&buff) {
 	buff = getWaveform();
 	return waveFrameNum;
 }

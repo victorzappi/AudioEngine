@@ -28,8 +28,8 @@ protected:
 	void readAudioModulesBuffers(int numOfSamples, double **framebufferOut, double **framebufferIn);
 
 	// these foo methods hide base ones, cos user is not allowed to access them [format is fixed]
-	inline void setPlaybackAudioFormat(snd_pcm_format_t fmt) {};
-	inline void setCaptureAudioFormat(snd_pcm_format_t fmt) {};
+	inline void setPlaybackAudioFormat(snd_pcm_format_t fmt) { (void)fmt; };
+	inline void setCaptureAudioFormat(snd_pcm_format_t fmt) { (void)fmt; };
 
 };
 
@@ -38,6 +38,7 @@ protected:
 // this is the most likely case, cos audio cards almost often support integers [float/double far are less common]
 // and CPUs are very likely to be Little Endian and to represent integers with 32 bits
 inline void MonoEngine_int32LE::fromRawToFloat_int(snd_pcm_uframes_t offset, int numSamples) {
+	(void)offset; // to mute warnings
 	int *insamples = (int *)capture.rawSamples;
 	for(int n = 0; n < numSamples; n++) {
 		for(unsigned int chn = 0; chn < capture.channels; chn++) {
@@ -65,6 +66,7 @@ inline void MonoEngine_int32LE::fromRawToFloat_int(snd_pcm_uframes_t offset, int
 
 
 inline void MonoEngine_int32LE::fromFloatToRaw_int(snd_pcm_uframes_t offset, int numSamples) {
+	(void)offset; // to mute warnings
 	int *outsamples = (int *)playback.rawSamples;
 	for(unsigned int chn = 0; chn < playback.channels; chn++) {
 		for(int n = 0; n < numSamples; n++) {

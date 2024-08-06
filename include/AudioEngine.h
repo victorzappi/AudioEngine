@@ -125,6 +125,7 @@ public:
 		bool isBigEndian;	 // is big endian?
 		bool isUnsigned;     // is unsigned?
 		bool isFloat;		 // is float?
+		int mask;			 // used for 2's complement, capture only
 	};
 
 	transfer_method transfer_methods[1]; //TODO re-enable other methods

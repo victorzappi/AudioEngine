@@ -276,8 +276,14 @@ int AudioEngine::initEngine() {
 
 	setLowLevelParams(playback);
 	// do same for capture device if full duplex engine
-	if(isFullDuplex)
+	if(isFullDuplex) {
 		setLowLevelParams(capture);
+		// plus compute the mask necessary to the two's complement of received raw samples
+		// in other words, we build a mask to extend the sign whenever the format uses fewer bits than the integer container
+		capture.mask = 0x00000000;
+		for(int i=capture.formatBits; i<sizeof(int)*8; i++)
+			capture.mask |= (1 << i); // put a 1 ub all bits that are beyond those used by the format
+	}
 
 
 
@@ -1170,6 +1176,10 @@ void AudioEngine::fromRawToFloat_int(snd_pcm_uframes_t offset, int numOfSamples)
 
 		for(int n = 0; n < numOfSamples; n++)  {
 			int res = (*this.*byteCombine)(chn, sampleBytes);
+
+			// if number we retrieve is larger than max, then this is a negative num using fewer bits than its int container
+			if(res>capture.maxVal)
+				res |= capture.mask; // we extend its sign to complete the two's complement
 
 			capture.frameBuffer[chn][n] = res/float(capture.maxVal);
 			sampleBytes[chn] += capture.byteStep;
