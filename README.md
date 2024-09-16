@@ -42,7 +42,7 @@ apt install cmake libasound2-dev libsndfile1-dev libfftw3-dev
 **_Now you can choose a project and build it like this:**
 ```console
 mkdir build && cd build
-cmake -DPRJ_DIR=path/to/project
+cmake .. -DPRJ_PATH=path/to/project
 make
 ```
 Notice that:

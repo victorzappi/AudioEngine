@@ -133,6 +133,9 @@ void AudioEngine::initRender() {
 
 /* Render function, called when new samples are needed */
 void AudioEngine::render(float sampleRate, int numOfSamples, int numOutChannels, double **framebufferOut, int numInChannels, double **framebufferIn) {
+	(void)sampleRate; // not used, we mute warning
+	(void)numOutChannels; // not used, we mute warning
+	(void)numInChannels; // not used, we mute warning
 
 	// by default, we call this method that fills the output framebuffer with the sum of the framebuffers of all the modules loaded into the engine
 	readAudioModulesBuffers(numOfSamples, framebufferOut, framebufferIn);
