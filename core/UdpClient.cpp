@@ -85,6 +85,7 @@
 		return send(sourceBuffer, numBytesToWrite);
 	}
   int UdpClient::waitUntilReady(bool readyForReading, int timeoutMsecs){
+	(void)readyForReading; // to mute warning
 //	If the socket is ready on return, this returns 1. If it times-out before the socket becomes ready, it returns 0. If an error occurs, it returns -1.
     if(enabled==false)
 		return -1;

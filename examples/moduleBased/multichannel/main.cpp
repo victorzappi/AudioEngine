@@ -23,11 +23,9 @@
 // examples using multi channel input/output via external audio interface
 
 #include "AudioEngine.h" // back end
-#include <csignal>  // to catch ctrl-c
+#include <signal.h> //SIGINT, SIGTERM
 
 using std::string;
-
-void ctrlC_handler(int s); // to catch ctrl-c
 
 
 // engine and global settings
@@ -45,7 +43,16 @@ oscillator_type type = osc_sin_;
 double level = 0.07;
 double freq = 440; // meeehhh
 
-int main(int argc, char *argv[]) {
+// Handle Ctrl-C by requesting that the audio rendering stop
+void interrupt_handler(int sig) {
+	(void) sig; // not used, mute warnig
+	printf("--->Signal caught!<---\n");
+	audioEngine.stopEngine();
+}
+
+
+
+int main() {
 	audioEngine.setFullDuplex(true);
 
 	audioEngine.setRate(rate); // same as default setting
@@ -60,7 +67,7 @@ int main(int argc, char *argv[]) {
 
 
 	sine = new Oscillator(); 
-	sine->init(type, rate, periodSize, level*0.1, freq, 0, false, 1, 2); // mono oscillator, outputted from on channel 2
+	sine->init(type, rate, periodSize, level*0.1, freq, 0, false, 1, 2); // mono oscillator, outputted on channel 2
 	audioEngine.addAudioModule(sine); 
 
 
@@ -70,38 +77,23 @@ int main(int argc, char *argv[]) {
 	audioEngine.addAudioModule(pass);
 
 	WavetableOsc *wosc = new WavetableOsc();
-	wosc->init(osc_square_, rate, periodSize, level*0.1, 1024, 1, 3);  // mono oscillator, outputted from on channel 3
+	wosc->init(osc_square_, rate, periodSize, level*0.1, 1024, 1, 3);  // mono oscillator, outputted on channel 3
 	wosc->setFrequency(260);
 	audioEngine.addAudioModule(wosc);
 
-
-	// let's catch ctrl-c to nicely stop the application
-	struct sigaction sigIntHandler;
-	sigIntHandler.sa_handler = ctrlC_handler;
-	sigemptyset(&sigIntHandler.sa_mask);
-	sigIntHandler.sa_flags = 0;
-	sigaction(SIGINT, &sigIntHandler, NULL);
-
-
+	// set up interrupt handler to catch Control-C and SIGTERM and nicely stop the application
+	signal(SIGINT, interrupt_handler);
+	signal(SIGTERM, interrupt_handler);
 
 	// triggers an infinite audio loop, can stop with ctrl-c, other similar critical stop commands or via multithreading
 	audioEngine.startEngine();
-
 
 	// these will be reached only when engine is stopped
 	delete sine;
 	delete pass;
 	delete wosc;
 
-	printf("Program ended\nBye bye_\n");
+	printf("\nBye!\n");
+
+	return 0;
 }
-
-
-
-
-// this is called by ctrl-c [note: it does not work in Eclipse]
-void ctrlC_handler(int s){
-   printf("\nCaught signal %d, stopping engine\n",s);
-   audioEngine.stopEngine();
-}
-

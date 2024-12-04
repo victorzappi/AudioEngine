@@ -20,7 +20,7 @@ MonoEngine_int32LE::MonoEngine_int32LE() : AudioEngine() {
 //----------------------------------------------------------------------------------------------------------------------------
 
 // simply copies a single buffer in all output buffers
-void MonoEngine_int32LE::readAudioModulesBuffers(int numOfSamples, double **framebufferOut, double **framebufferIn) {
+void MonoEngine_int32LE::readAudioModulesBuffers(int numOfSamples/* , double **framebufferOut, double **framebufferIn */) {
 	// read all buffers
 
 	// first buffers from output audio modules
@@ -31,7 +31,7 @@ void MonoEngine_int32LE::readAudioModulesBuffers(int numOfSamples, double **fram
 	// even if not in full duplex mode...
 	double **inBuff;
 	if(isFullDuplex)
-		inBuff = framebufferIn;
+		inBuff = capture.frameBuffer;
 	else
 		inBuff = silenceBuff; //...by setting silent input buffers
 	for(int i=0; i<numOfAudioModulesInOut; i++)
@@ -42,13 +42,13 @@ void MonoEngine_int32LE::readAudioModulesBuffers(int numOfSamples, double **fram
 	for(int i=0; i<numOfAudioModules; i++) {
 		if(audioModulesChnOffset[i]==0) {
 			for(int n=0; n<numOfSamples; n++)
-				framebufferOut[0][n] += moduleFramebuffer[i][0][n];
+				playback.frameBuffer[0][n] += moduleFramebuffer[i][0][n];
 		}
 	}
 
 	// copy first buffer in all other output buffers -> same mono output across all channels
 	for(int ch=1; ch<playback.channels; ch++) {
-		memcpy(framebufferOut[ch], framebufferOut[0], sizeof(double)*numOfSamples);
+		memcpy(playback.frameBuffer[ch], playback.frameBuffer[0], sizeof(double)*numOfSamples);
 	}
 }
 

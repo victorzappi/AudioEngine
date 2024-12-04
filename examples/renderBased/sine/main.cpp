@@ -23,20 +23,22 @@
 // makes a infinite and annoying sine with the audio engine
 
 #include "AudioEngine.h" // back end
+#include <signal.h> //SIGINT, SIGTERM
 
 // engine and global settings
 AudioEngine audioEngine;
 unsigned short periodSize = 256;
 unsigned int rate = 48000;
 
+// Handle Ctrl-C by requesting that the audio rendering stop
+void interrupt_handler(int sig) {
+	(void) sig; // not used, mute warnig
+	printf("--->Signal caught!<---\n");
+	audioEngine.stopEngine();
+}
 
-// oscillator and its settings
-Oscillator *sine;
-oscillator_type type = osc_sin_;
-double level = 0.3;
-double freq = 440; // meeehhh
 
-int main(int argc, char *argv[]) {
+int main() {
 
 	// these 3 are same as default settings, put here explicitly for clarity only
 	audioEngine.setRate(rate);
@@ -45,14 +47,13 @@ int main(int argc, char *argv[]) {
 
 	audioEngine.initEngine(); // ready to go
 
-	sine = new Oscillator(); // handy to deal with this as pointer or address
-	sine->init(type, rate, periodSize, level, freq); // when inited, oscillator is automatically triggered
-
-	// tells engine to retrieve samples from oscillator
-	audioEngine.addAudioModule(sine); // add generators or any object whose class derives from AudioOutput abstract class
+	// Set up interrupt handler to catch Control-C and SIGTERM
+	signal(SIGINT, interrupt_handler);
+	signal(SIGTERM, interrupt_handler);
 
 	audioEngine.startEngine(); // triggers an infinite audio loop, can stop with ctrl-c or similar critical stop commands
 
-	// this will never be reached q:
+	printf("\nBye!\n");
+
 	return 0;
 }

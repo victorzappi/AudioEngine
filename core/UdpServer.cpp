@@ -78,6 +78,8 @@ void UdpServer::close(){
 
 int UdpServer::waitUntilReady(bool readyForReading, int timeoutMsecs){
 //	If the socket is ready on return, this returns 1. If it times-out before the socket becomes ready, it returns 0. If an error occurs, it returns -1.
+	(void)readyForReading; // not used, we mute warning
+
 	if(enabled==false)
 		return -1;
 	if(timeoutMsecs<0)
@@ -100,6 +102,8 @@ int UdpServer::read(//Returns the number of bytes read, or -1 if there was an er
 					int maxBytesToRead,
 					bool blockUntilSpecifiedAmountHasArrived)
 {
+	(void)blockUntilSpecifiedAmountHasArrived; // not used, we mute warning
+	
 	if(enabled==false)
 		return -1;
 	FD_ZERO(&stReadFDS);

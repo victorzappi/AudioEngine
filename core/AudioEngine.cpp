@@ -184,7 +184,12 @@ AudioEngine::~AudioEngine() {
 	}
 }
 
-int AudioEngine::initEngine() {
+int AudioEngine::initEngine(void *userData) {
+	this->userData = userData;
+#ifdef DEFAULT_RENDER
+	this->userData = this;
+#endif
+
 	snd_output_t *output;
 
 	int err = snd_output_stdio_attach(&output, stdout, 0);
@@ -348,6 +353,18 @@ int AudioEngine::initEngine() {
 		memset(silenceBuff[i], 0, sizeof(double)*period_size);
 	}
 
+	// contexts
+	intContext.sampleRate = rate;
+	intContext.numOutChannels =  playback.channels;
+	if(!isFullDuplex)
+		intContext.numInChannels = 0;
+	else
+		intContext.numInChannels = capture.channels;
+	intContext.framebufferOut = playback.frameBuffer;
+	intContext.framebufferIn = capture.frameBuffer;
+	intContext.numOfSamples = period_size;
+	context = (EngineContext*)&intContext;
+
 	engineReady = true;
 
 	return 0;
@@ -358,7 +375,10 @@ int AudioEngine::startEngine() {
 		printf("Starting AudioEngine\n");
 	engineIsRunning = true;
 
-	initRender();
+	if( !::setup(context, userData) ){
+		::cleanup(context, userData);
+		shutEngine();
+	}
 
 	int err = (this->*(transfer_methods[method].transfer_loop))();
 
@@ -368,7 +388,7 @@ int AudioEngine::startEngine() {
 		return 1;
 	}
 
-	cleanUpRender();
+	::cleanup(context, userData);
 
 	shutEngine();
 
@@ -636,6 +656,7 @@ int AudioEngine::setHwParams(audioStructure &audio) {
 		printf("\tFormat %s not supported: %s\n", snd_pcm_format_name(audio.format), snd_strerror(err));
 		printf("\tSearching for a supported one...\n");
 
+		//TODO start from SND_PCM_FORMAT_S8 and try all formats? 3LE is skipped right now
 		for(int i=SND_PCM_FORMAT_S32; i<SND_PCM_FORMAT_FLOAT64; i+=2) {
 			audio.format = (snd_pcm_format_t)i;
 			err = snd_pcm_hw_params_set_format(audio.handle, audio.hwparams, audio.format);
@@ -976,7 +997,8 @@ int AudioEngine::audioLoop_write() {
 	while(engineIsRunning) {
 
 		// call the render function, which is conveniently detached in AudioEngine_render.cpp -> playback samples maybe synthesized
-		render((float)rate, period_size, playback.channels, playback.frameBuffer, 0/*capture.channels*/, capture.frameBuffer/*silence*/);
+		// render((float)rate, period_size, playback.channels, playback.frameBuffer, 0/*capture.channels*/, capture.frameBuffer/*silence*/);
+		::render(context, userData);
 
 		// from float samples to playback raw samples
 		(*this.*fromFloatToRaw)(0, period_size);
@@ -1032,7 +1054,8 @@ int AudioEngine::audioLoop_readWrite() {
 			(*this.*fromRawToFloat)(0, numOfSamples);
 
 			// call the render function, which is conveniently detached in AudioEngine_render.cpp -> capture may be processed and playback samples maybe synthesized, both possibly combined
-			render((float)rate, period_size, playback.channels, playback.frameBuffer, capture.channels, capture.frameBuffer);
+			// render((float)rate, period_size, playback.channels, playback.frameBuffer, capture.channels, capture.frameBuffer);
+			::render(context, userData);
 
 			// from float samples to playback raw samples
 			(*this.*fromFloatToRaw)(0, numOfSamples);
@@ -1284,7 +1307,7 @@ void AudioEngine::fromRawToFloat_float64(snd_pcm_uframes_t offset, int numOfSamp
 }*/
 
 
-void AudioEngine::readAudioModulesBuffers(int numOfSamples, double **framebufferOut, double **framebufferIn) {
+void AudioEngine::readAudioModulesBuffers(int numOfSamples/* , double **framebufferOut, double **framebufferIn */) {
 	// read all buffers
 
 	// first buffers from output audio modules
@@ -1295,7 +1318,7 @@ void AudioEngine::readAudioModulesBuffers(int numOfSamples, double **framebuffer
 	// even if not in full duplex mode...
 	double **inBuff;
 	if(isFullDuplex)
-		inBuff = framebufferIn;
+		inBuff = capture.frameBuffer;// framebufferIn;
 	else
 		inBuff = silenceBuff; //...by setting silent input buffers
 	for(int i=0; i<numOfAudioModulesInOut; i++)
@@ -1306,7 +1329,7 @@ void AudioEngine::readAudioModulesBuffers(int numOfSamples, double **framebuffer
 	for(int i=0; i<numOfAudioModules; i++) {
 		for(int j=audioModulesChnOffset[i]; j<audioModulesChnOffset[i]+audioModulesChannels[i]; j++) {
 			for(int n=0; n<numOfSamples; n++)
-				framebufferOut[j][n] += moduleFramebuffer[i][j][n];
+				/* framebufferOut */playback.frameBuffer[j][n] += moduleFramebuffer[i][j][n];
 		}
 	}
 }

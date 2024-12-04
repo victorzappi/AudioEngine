@@ -74,6 +74,8 @@
 
 
 #include "AudioGenerator.h"
+#include "render.h"
+
 
 #define MAX_NUM_OF_AUDIOMODULES_OUT 10
 #define MAX_NUM_OF_AUDIOMODULES_INOUT MAX_NUM_OF_AUDIOMODULES_OUT
@@ -81,6 +83,15 @@
 struct audioThread_data {
    int  argc;
    char **argv;
+};
+
+struct InternalContext {
+	float sampleRate;
+    int numOutChannels;
+    int numInChannels;
+    double **framebufferOut;
+    double **framebufferIn; 
+	int numOfSamples;
 };
 
 
@@ -134,7 +145,7 @@ public:
 	virtual ~AudioEngine();
 
 	// usage method
-	int initEngine();
+	int initEngine(void *userData = nullptr);
 	int startEngine();
 	int stopEngine();
 
@@ -215,6 +226,11 @@ protected:
 	bool engineReady;	  // engine has been initialized?
 	bool engineIsRunning; // engine is running?
 
+	InternalContext intContext;
+	EngineContext *context = nullptr;
+
+	void *userData = nullptr; // user-provided data for non-default render interface
+
 
 	int findDevice(std::string cardName, char *device);
 	int printCardName(char *device);
@@ -222,19 +238,13 @@ protected:
 	int setSwParams(audioStructure audio);
 	int setLowLevelParams(audioStructure &audio);
 
-	virtual void readAudioModulesBuffers(int numOfSamples, double **framebufferOut, double **framebufferIn);
-
 	int shutEngine();
 	int preparePcm(bool reset=false);
 	int underrunRecovery(int err);
 	int overrunRecovery(int err);
 
 	//int interpolateVolume(); // maybe i was not clear, MUST interpolate to modify volume
-
-	virtual void initRender();
-	virtual void render(float sampleRate, int numOfSamples, int numOutChannels, double **framebufferOut, int numInChannels, double **framebufferIn);
-	virtual void cleanUpRender();
-
+	
 	int (AudioEngine::*writeAudio)(long);
 	int writeAudio_block(long numSamples);
 	int writeAudio_nonBlock(long numSamples);
@@ -270,6 +280,10 @@ protected:
 	//virtual void fromRawToFloat_ufloat(snd_pcm_uframes_t offset, int numSamples);
 	virtual void fromRawToFloat_float64(snd_pcm_uframes_t offset, int numSamples);
 
+	virtual void readAudioModulesBuffers(int numOfSamples/* , double **framebufferOut, double **framebufferIn */);
+	
+	// for default render()
+	friend void callReadAudioModulesBuffers(AudioEngine* engine, int numOfSamples);
 
 };
 
@@ -278,7 +292,7 @@ protected:
 //-----------------------------------------------------------
 //-----------------------------------------------------------
 // other core headers that are handy to the user
-#include "MonoEngine_int32LE.h"
+// #include "MonoEngine_int32LE.h"
 //-----------------------------------------------------------
 //-----------------------------------------------------------
 

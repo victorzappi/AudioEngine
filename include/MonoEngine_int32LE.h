@@ -8,7 +8,7 @@
 #ifndef INCLUDE_MONOENGINE_INT32LE_H_
 #define INCLUDE_MONOENGINE_INT32LE_H_
 
-class AudioEngine;
+// class AudioEngine;
 
 #include "AudioEngine.h"
 
@@ -25,7 +25,7 @@ protected:
 	void fromFloatToRaw_int(snd_pcm_uframes_t offset, int numSamples);
 
 	// simplified mono version of base one
-	void readAudioModulesBuffers(int numOfSamples, double **framebufferOut, double **framebufferIn);
+	void readAudioModulesBuffers(int numOfSamples/* , double **framebufferOut, double **framebufferIn */);
 
 	// these foo methods hide base ones, cos user is not allowed to access them [format is fixed]
 	inline void setPlaybackAudioFormat(snd_pcm_format_t fmt) { (void)fmt; };

@@ -20,64 +20,64 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// makes a passthrough and allows for nicely stopping the application with ctrl-c
+// makes two sinusoids, one of which is a wavetable osc, and allows for nicely stopping the application with ctrl-c
 
 #include "AudioEngine.h" // back end
-#include <csignal>  // to catch ctrl-c
-
-
-void ctrlC_handler(int s); // to catch ctrl-c
-
+#include <signal.h> //SIGINT, SIGTERM
 
 // engine and global settings
 AudioEngine audioEngine;
 unsigned short periodSize = 256;
-unsigned int rate = 44100;
+unsigned int rate = 48000;
 
-// passthrough setting
-double level = 0.5;
-int inputChannel = 0;
-int outputChannelCount = 2;
-int outputChannelOffset = 0;
 
-int main(int argc, char *argv[]) {
-	audioEngine.setFullDuplex(true); // so that the engine captures inputs
+// oscillator and its settings
+Oscillator *sine;
+oscillator_type type = osc_sin_;
+double level = 0.1;
+double freq = 440; // meeehhh
 
+
+// Handle Ctrl-C by requesting that the audio rendering stop
+void interrupt_handler(int sig) {
+	(void) sig; // not used, mute warnig
+	printf("--->Signal caught!<---\n");
+	audioEngine.stopEngine();
+}
+
+
+int main() {
 	audioEngine.setRate(rate); // same as default setting
 	audioEngine.setPeriodSize(periodSize);
 	audioEngine.setBufferSize(2*periodSize);
 
 	audioEngine.initEngine(); // ready to go
 
-	MultiPassthrough *pass = new MultiPassthrough();
-	pass->init(periodSize, inputChannel, outputChannelCount, outputChannelOffset); // get the input channel 0 and pass it through output channels 0 and 1
-	audioEngine.addAudioModule(pass);
-
-	// let's catch ctrl-c to nicely stop the application
-	struct sigaction sigIntHandler;
-	sigIntHandler.sa_handler = ctrlC_handler;
-	sigemptyset(&sigIntHandler.sa_mask);
-	sigIntHandler.sa_flags = 0;
-	sigaction(SIGINT, &sigIntHandler, NULL);
+	sine = new Oscillator(); // handy to deal with this as pointer or address
+	sine->init(type, rate, periodSize, level, freq, 0); // when inited, oscillator is automatically triggered
+	// tells engine to retrieve samples from oscillator
+	audioEngine.addAudioModule(sine); // add generators or any object whose class derives from AudioOutput abstract class
 
 
+	// we can alos use local objects
+	WavetableOsc *wosc = new WavetableOsc();
+	wosc->init(osc_square_, rate, periodSize, level, 1024);
+	wosc->setFrequency(260);
+	audioEngine.addAudioModule(wosc);
+
+	// Set up interrupt handler to catch Control-C and SIGTERM
+	signal(SIGINT, interrupt_handler);
+	signal(SIGTERM, interrupt_handler);
 
 	// triggers an infinite audio loop, can stop with ctrl-c
 	audioEngine.startEngine();
 
 
-	// this will be reached only when engine is stopped
-	delete pass;
+	// these will be reached only when engine is stopped
+	delete sine;
+	delete wosc;
 
-	printf("Program ended\nBye bye_\n");
+	printf("\nBye!\n");
+
+	return 0;
 }
-
-
-
-
-// this is called by ctrl-c [note: it does not work in Eclipse]
-void ctrlC_handler(int s){
-   printf("\nCaught signal %d, stopping engine\n",s);
-   audioEngine.stopEngine();
-}
-
