@@ -40,10 +40,16 @@ file(GLOB_RECURSE SRC_FILES "core/*.cpp")
 if(BUILD_PROJECT)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-    # Assign default project if one is not specified
-    if(NOT PRJ_PATH)
-        set(PRJ_PATH ${DEFAULT_PRJ})
+    # Convert PRJ_PATH to an absolute path relative to the source directory
+    get_filename_component(PRJ_PATH "${PRJ_PATH}" ABSOLUTE "${CMAKE_SOURCE_DIR}")
+
+    # Verify PRJ_PATH is a directory
+    if(NOT IS_DIRECTORY "${PRJ_PATH}")
+        message(FATAL_ERROR "PRJ_PATH must be a valid directory. Given value: ${PRJ_PATH}")
     endif()
+
+    message(STATUS "Using PRJ_PATH: ${PRJ_PATH}")
+
 
     # Get project source files
     file(GLOB_RECURSE PRJ_SRC_FILES "${PRJ_PATH}/*.cpp")
@@ -70,15 +76,19 @@ if(BUILD_PROJECT)
     list(APPEND ALL_SRC_FILES ${SRC_FILES})
     list(APPEND ALL_SRC_FILES ${PRJ_SRC_FILES})
 
-    # Determine binary name if not specified
+    # Determine binary name if not specified (no extension)
     if(NOT BIN_NAME)
-        get_filename_component(BIN_NAME ${PRJ_PATH} NAME)
+        get_filename_component(BIN_NAME ${PRJ_PATH} NAME_WE)
     endif()
 
     add_executable(${BIN_NAME} ${ALL_SRC_FILES})
 
     # Link necessary libraries
-    target_link_libraries(${BIN_NAME} -pthread -ffast-math m asound sndfile fftw3f fftw3)
+    target_link_libraries(${BIN_NAME} PRIVATE -pthread m asound sndfile fftw3f fftw3)
+
+    # Add compile options separately
+    target_compile_options(${BIN_NAME} PRIVATE -pthread -ffast-math)
+
 else() # when engine is used as library by a parent project
     # Expose the core source and include files to the 'upmodule' (parent project)
     set(ENGINE_SRC_FILES ${SRC_FILES} PARENT_SCOPE)
